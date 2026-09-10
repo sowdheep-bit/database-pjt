@@ -57,9 +57,9 @@ class PeakHourRecord:
     @classmethod
     def from_row(cls, row: dict) -> "PeakHourRecord":
         return cls(
-            hour_of_day=row["HourOfDay"],
-            total_orders=row["TotalOrders"],
-            total_items=row["TotalItems"],
+            hour_of_day=int(row["HourOfDay"]),
+            total_orders=int(row["TotalOrders"] or 0),
+            total_items=int(row["TotalItems"] or 0),
         )
 
 
@@ -77,6 +77,6 @@ class RollingAverageRecord:
             item_id=row["ItemID"],
             name=row["Name"],
             menu_date=row["MenuDate"],
-            quantity_sold=row["QuantitySold"],
-            avg_sold=float(row["AvgSold"]),
+            quantity_sold=int(row["QuantitySold"] or 0),
+            avg_sold=float(row["AvgSold"] or 0.0),
         )

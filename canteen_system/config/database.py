@@ -127,7 +127,7 @@ class DatabaseManager:
                     self.connection.commit()
                     return cur.lastrowid
                 upper = query.strip().upper()
-                if upper.startswith("SELECT") or upper.startswith("SHOW"):
+                if upper.startswith(("SELECT", "SHOW", "WITH")):
                     return cur.fetchall()
                 return None
             except Error as exc:
@@ -141,10 +141,14 @@ class DatabaseManager:
 
     def ensure_database_exists(self) -> None:
         """Create the `canteen_db` schema if it doesn't exist."""
-        self.connection.cursor().execute(
-            "CREATE DATABASE IF NOT EXISTS canteen_db"
-        )
-        self.connection.commit()
+        cur = self.connection.cursor()
+        try:
+            cur.execute("CREATE DATABASE IF NOT EXISTS canteen_db")
+            # consume any result so the connection stays clean
+            cur.fetchall()
+            self.connection.commit()
+        finally:
+            cur.close()
 
     def initialize_schema(self, schema_file: str) -> bool:
         """
