@@ -20,6 +20,7 @@ from typing import Any, Generator, Optional
 
 import mysql.connector
 from mysql.connector import Error, MySQLConnection
+from mysql.connector.pooling import MySQLConnectionPool
 
 
 class DatabaseManager:
@@ -39,6 +40,47 @@ class DatabaseManager:
         self.port = port
         self.database = database
         self.connection: Optional[MySQLConnection] = None
+        self._pool: Optional[MySQLConnectionPool] = None
+
+    # ------------------------------------------------------------------
+    # Web connection pool (additive — does not affect CLI connect/disconnect)
+    # ------------------------------------------------------------------
+
+    def connect_pool(self, pool_size: int = 5) -> None:
+        """
+        Initialise a MySQLConnectionPool for concurrent web requests.
+        Call this during Flask app startup instead of connect().
+        The CLI continues to use connect() / disconnect() — unchanged.
+        """
+        self._pool = MySQLConnectionPool(
+            pool_name="canteen_pool",
+            pool_size=pool_size,
+            host=self.host,
+            user=self.user,
+            password=self.password,
+            port=self.port,
+            database=self.database,
+        )
+
+    @contextmanager
+    def get_pool_connection(self):
+        """
+        Yield a connection from the pool.  The connection is returned to the
+        pool automatically when the context exits (even on error).
+
+        Usage::
+
+            with db.get_pool_connection() as conn:
+                with conn.cursor(dictionary=True) as cur:
+                    cur.execute(...)
+        """
+        if self._pool is None:
+            raise RuntimeError("Connection pool is not initialised. Call connect_pool() first.")
+        conn = self._pool.get_connection()
+        try:
+            yield conn
+        finally:
+            conn.close()  # returns connection back to pool
 
     # ------------------------------------------------------------------
     # Connection lifecycle

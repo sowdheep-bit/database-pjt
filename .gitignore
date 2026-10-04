@@ -20,3 +20,8 @@ Thumbs.db
 # Sensitive / local config (do NOT push DB passwords)
 *.env
 .env
+.env.local
+
+# Node (npm init was run — no Python dependency on this)
+node_modules/
+package-lock.json

@@ -1,0 +1,117 @@
+{% extends "management/base_mgmt.html" %}
+{% block title %}Dashboard — Canteen Management{% endblock %}
+
+{% block management_content %}
+<div class="page-header">
+  <div class="page-header-inner">
+    <div>
+      <div class="page-title">Dashboard</div>
+      <div class="page-subtitle">Today's canteen at a glance</div>
+    </div>
+    <div class="user-badge">{{ session.get('manager_level', 'Manager') }}</div>
+  </div>
+</div>
+
+{# ── KPI Stats ──────────────────────────────────────────── #}
+<div class="grid-4 mb-4" id="kpi-grid">
+  <div class="stat-card">
+    <div class="stat-icon">🛒</div>
+    <div class="stat-value">{{ orders_count }}</div>
+    <div class="stat-label">Orders Today</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon">💰</div>
+    <div class="stat-value">₹{{ "%.0f"|format(revenue) }}</div>
+    <div class="stat-label">Revenue Today</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon">🍽</div>
+    <div class="stat-value">{{ menu_item_count }}</div>
+    <div class="stat-label">Menu Items Today</div>
+  </div>
+  <div class="stat-card {% if low_stock_count > 0 %}stat-card-error{% endif %}">
+    <div class="stat-icon">⚠️</div>
+    <div class="stat-value {% if low_stock_count > 0 %}text-error{% else %}text-success{% endif %}">
+      {{ low_stock_count }}
+    </div>
+    <div class="stat-label">Low Stock Alerts</div>
+  </div>
+</div>
+
+<div class="grid-2 gap-4">
+  {# ── Today's Menu ─────────────────────────────────── #}
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">☀️ Today's Menu</span>
+      <a href="{{ url_for('management.morning_setup') }}" class="btn btn-outline btn-sm" id="setup-link">Edit Setup</a>
+    </div>
+    {% if today_menu %}
+      <div style="display:flex; flex-direction:column; gap:0.75rem;">
+        {% for item in today_menu %}
+        <div style="display:flex; align-items:center; justify-content:space-between; padding:0.75rem; background:rgba(255,255,255,0.03); border-radius:var(--radius-sm);">
+          <div>
+            <div style="font-weight:600; color:#fff; font-size:0.9rem;">{{ item.name }}</div>
+            <div style="font-size:0.78rem; color:var(--text-muted);">{{ item.category }} · ₹{{ "%.2f"|format(item.cost_price|float) }}</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-size:0.82rem; color:var(--text-muted);">{{ item.quantity_sold }} / {{ item.quantity_prepared }}</div>
+            <div style="font-size:0.75rem;" class="{% if item.available <= 5 %}text-warning{% else %}text-accent{% endif %}">
+              {{ item.available }} left
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty-state" style="padding:2rem 0;">
+        <div class="empty-icon">☀️</div>
+        <div class="empty-title">No menu set today</div>
+        <div class="empty-text">Run morning setup to add items.</div>
+      </div>
+    {% endif %}
+  </div>
+
+  {# ── Recent Alerts ─────────────────────────────── #}
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">🔔 Recent Stock Alerts</span>
+      <a href="{{ url_for('management.inventory') }}" class="btn btn-outline btn-sm" id="inv-link">View All</a>
+    </div>
+    {% if alerts %}
+      <div style="display:flex; flex-direction:column; gap:0.65rem;">
+        {% for alert in alerts %}
+        <div style="display:flex; align-items:center; gap:0.75rem; padding:0.65rem; background:rgba(239,68,68,0.06); border:1px solid rgba(239,68,68,0.15); border-radius:var(--radius-sm);">
+          <span style="font-size:1.1rem;">⚠️</span>
+          <div>
+            <div style="font-size:0.85rem; font-weight:600; color:#F87171;">{{ alert.ingredient_name }}</div>
+            <div style="font-size:0.75rem; color:var(--text-dim);">
+              Stock: {{ alert.current_stock }} · Threshold: {{ alert.reorder_threshold }}
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty-state" style="padding:2rem 0;">
+        <div class="empty-icon">✅</div>
+        <div class="empty-title">All stock levels OK</div>
+        <div class="empty-text">No low-stock alerts at the moment.</div>
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+{# ── End-of-Day Wastage ──────────────────────────────────── #}
+<div class="card mt-4" style="background:linear-gradient(135deg, rgba(239,68,68,0.08), rgba(255,101,132,0.05)); border-color:rgba(239,68,68,0.2);">
+  <div class="flex-between">
+    <div>
+      <div class="card-title">🗑 End-of-Day Wastage Log</div>
+      <p class="mt-1">Calculate and log today's unsold portions. Safe to run multiple times (idempotent).</p>
+    </div>
+    <form method="POST" action="{{ url_for('management.log_wastage') }}"
+          onsubmit="return confirm('Log today\'s wastage?')">
+      <button type="submit" class="btn btn-danger" id="eod-wastage-btn">Log Wastage</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

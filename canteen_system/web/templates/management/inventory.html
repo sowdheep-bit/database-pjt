@@ -1,0 +1,139 @@
+{% extends "management/base_mgmt.html" %}
+{% block title %}Inventory — Canteen Management{% endblock %}
+
+{% block management_content %}
+<div class="page-header">
+  <div class="page-header-inner">
+    <div>
+      <div class="page-title">📦 Inventory</div>
+      <div class="page-subtitle">Current stock levels and replenishment</div>
+    </div>
+    <div>
+      {% set low_count = stock|selectattr('is_low_stock')|list|length %}
+      {% if low_count > 0 %}
+        <span class="badge badge-error" style="font-size:0.88rem; padding:0.4rem 1rem;">
+          ⚠ {{ low_count }} low stock item(s)
+        </span>
+      {% else %}
+        <span class="badge badge-success" style="font-size:0.88rem; padding:0.4rem 1rem;">
+          ✓ All stock OK
+        </span>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+{# ── Stock Table ──────────────────────────────────────────── #}
+<div class="card mb-4">
+  <div class="card-header">
+    <span class="card-title">Stock Levels</span>
+    <span style="font-size:0.78rem; color:var(--text-muted);">{{ stock|length }} ingredient(s)</span>
+  </div>
+
+  {% if stock %}
+  <div class="table-wrapper">
+    <table id="stock-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Ingredient</th>
+          <th>Current Stock</th>
+          <th>Reorder Level</th>
+          <th>Status</th>
+          <th>Replenish</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for ing in stock %}
+        <tr id="stock-row-{{ ing.ingredient_id }}">
+          <td style="color:var(--text-dim);">#{{ ing.ingredient_id }}</td>
+          <td style="font-weight:600; color:#fff;">{{ ing.ingredient_name }}</td>
+          <td>
+            <span style="font-weight:700;" class="{% if ing.is_low_stock %}text-error{% else %}text-accent{% endif %}">
+              {{ ing.current_stock }}
+            </span>
+            {% set pct = [(ing.current_stock / ing.reorder_threshold * 50)|int, 100]|min if ing.reorder_threshold > 0 else 100 %}
+            <div class="stock-bar">
+              <div class="stock-bar-fill {% if ing.is_low_stock %}stock-low{% elif pct < 70 %}stock-warn{% else %}stock-ok{% endif %}"
+                   style="width: {{ pct }}%;"></div>
+            </div>
+          </td>
+          <td style="color:var(--text-muted);">{{ ing.reorder_threshold }}</td>
+          <td>
+            {% if ing.is_low_stock %}
+              <span class="badge badge-error">Low Stock</span>
+            {% else %}
+              <span class="badge badge-success">OK</span>
+            {% endif %}
+          </td>
+          <td>
+            <form method="POST" action="{{ url_for('management.replenish') }}"
+                  id="replenish-form-{{ ing.ingredient_id }}"
+                  style="display:flex; gap:0.4rem; align-items:center;">
+              <input type="hidden" name="ingredient_id" value="{{ ing.ingredient_id }}" />
+              <input class="form-control" type="number" name="amount" step="0.1" min="0.1"
+                     placeholder="Amount" style="width:80px; padding:0.35rem 0.5rem; font-size:0.82rem;"
+                     required />
+              <button type="submit" class="btn btn-primary btn-sm" id="replenish-btn-{{ ing.ingredient_id }}">
+                + Add
+              </button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+    <div class="empty-state">
+      <div class="empty-icon">📦</div>
+      <div class="empty-title">No inventory data</div>
+    </div>
+  {% endif %}
+</div>
+
+{# ── Recent Alerts ────────────────────────────────────────── #}
+<div class="card">
+  <div class="card-header">
+    <span class="card-title">🔔 Recent Low-Stock Alerts</span>
+    <span style="font-size:0.78rem; color:var(--text-muted);">Last 20 trigger events</span>
+  </div>
+
+  {% if alerts %}
+  <div class="table-wrapper">
+    <table id="alerts-table">
+      <thead>
+        <tr>
+          <th>Alert ID</th>
+          <th>Ingredient</th>
+          <th>Type</th>
+          <th>Current Stock</th>
+          <th>Threshold</th>
+          <th>Triggered At</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for a in alerts %}
+        <tr id="alert-row-{{ a.alert_id }}">
+          <td style="color:var(--text-dim);">#{{ a.alert_id }}</td>
+          <td style="font-weight:600; color:#fff;">{{ a.ingredient_name }}</td>
+          <td><span class="badge badge-warning">{{ a.alert_type }}</span></td>
+          <td style="color:var(--error);">{{ a.current_stock }}</td>
+          <td style="color:var(--text-muted);">{{ a.reorder_threshold }}</td>
+          <td style="color:var(--text-muted); font-size:0.82rem;">
+            {{ a.alert_timestamp.strftime('%d %b %Y, %H:%M') if a.alert_timestamp else '—' }}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+    <div class="empty-state">
+      <div class="empty-icon">✅</div>
+      <div class="empty-title">No alerts yet</div>
+      <div class="empty-text">The MySQL trigger fires automatically when stock drops below threshold.</div>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

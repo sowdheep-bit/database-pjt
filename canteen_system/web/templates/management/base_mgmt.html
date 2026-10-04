@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block body %}
+<div class="management-layout">
+  {# ── Sidebar ──────────────────────────────────────────────── #}
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="sidebar-brand-name">🍽 Canteen</div>
+      <div class="sidebar-brand-sub">Management Portal</div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="sidebar-section">Overview</div>
+      <a href="{{ url_for('management.dashboard') }}"
+         class="{% if request.endpoint == 'management.dashboard' %}active{% endif %}"
+         id="sidebar-dashboard">
+        <span class="sidebar-icon">📊</span> Dashboard
+      </a>
+
+      <div class="sidebar-section">Operations</div>
+      <a href="{{ url_for('management.morning_setup') }}"
+         class="{% if request.endpoint == 'management.morning_setup' %}active{% endif %}"
+         id="sidebar-morning-setup">
+        <span class="sidebar-icon">☀️</span> Morning Setup
+      </a>
+      <a href="{{ url_for('management.inventory') }}"
+         class="{% if request.endpoint == 'management.inventory' %}active{% endif %}"
+         id="sidebar-inventory">
+        <span class="sidebar-icon">📦</span> Inventory
+      </a>
+
+      <div class="sidebar-section">End of Day</div>
+      <form method="POST" action="{{ url_for('management.log_wastage') }}" id="sidebar-wastage-form"
+            onsubmit="return confirm('Log today\'s wastage? This is idempotent — safe to run multiple times.')">
+        <button type="submit" class="btn btn-outline btn-sm btn-full" style="border-radius:var(--radius-sm); margin-bottom:0.1rem;"
+                id="sidebar-wastage-btn">
+          <span class="sidebar-icon">🗑</span> Log Wastage
+        </button>
+      </form>
+
+      <div class="sidebar-section">Analytics</div>
+      <a href="{{ url_for('management.analytics') }}"
+         class="{% if request.endpoint == 'management.analytics' %}active{% endif %}"
+         id="sidebar-analytics">
+        <span class="sidebar-icon">📈</span> Analytics
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="sidebar-user">
+        <strong>{{ session.get('manager_name', 'Manager') }}</strong>
+        {{ session.get('manager_level', '') }}
+      </div>
+      <a href="{{ url_for('management.logout') }}" class="btn btn-outline btn-sm btn-full" id="sidebar-logout">
+        Logout
+      </a>
+    </div>
+  </aside>
+
+  {# ── Main content ──────────────────────────────────────────── #}
+  <main class="main-content">
+    {% block management_content %}{% endblock %}
+  </main>
+</div>
+{% endblock %}

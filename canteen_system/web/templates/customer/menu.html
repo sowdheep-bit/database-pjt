@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block title %}Today's Menu — Canteen System{% endblock %}
+{% block meta_description %}Browse today's available menu items and place your order.{% endblock %}
+
+{% block body %}
+{# ── Navbar ──────────────────────────────────────────────────── #}
+<nav class="navbar">
+  <div class="navbar-inner">
+    <a href="{{ url_for('index') }}" class="navbar-brand">
+      <div class="brand-icon">🍽</div>
+      Canteen
+    </a>
+    <ul class="navbar-nav">
+      <li><a href="{{ url_for('customer.menu') }}" class="active" id="nav-menu">Menu</a></li>
+      <li><a href="{{ url_for('customer.orders') }}" id="nav-orders">My Orders</a></li>
+    </ul>
+    <div class="navbar-user">
+      <span>👋 {{ session.get('customer_name', 'Customer') }}</span>
+      <a href="{{ url_for('customer.logout') }}" class="btn btn-outline btn-sm" id="logout-btn">Logout</a>
+    </div>
+  </div>
+</nav>
+
+<div class="container" style="padding-top:2rem; padding-bottom:3rem;">
+  <div class="page-header-inner mb-4">
+    <div>
+      <div class="page-title">Today's Menu</div>
+      <div class="page-subtitle">Fresh items prepared for today — order before they run out</div>
+    </div>
+    <div class="user-badge">ID: {{ session.get('customer_id') }}</div>
+  </div>
+
+  {% if menu_items %}
+    <div class="menu-grid" id="menu-grid">
+      {% for item in menu_items %}
+      <div class="menu-item-card" id="menu-card-{{ item.item_id }}">
+        <div class="menu-item-category">{{ item.category }}</div>
+        <div class="menu-item-name">{{ item.name }}</div>
+        <div class="menu-item-price">₹{{ "%.2f"|format(item.cost_price|float) }}</div>
+
+        <div class="menu-item-avail">
+          {% if item.available <= 5 %}
+            <span class="avail-badge low">⚡ Only {{ item.available }} left</span>
+          {% else %}
+            <span class="avail-badge">✓ {{ item.available }} available</span>
+          {% endif %}
+        </div>
+
+        <form method="POST" action="{{ url_for('customer.place_order') }}" id="order-form-{{ item.item_id }}">
+          <input type="hidden" name="item_id" value="{{ item.item_id }}" />
+          <div class="flex gap-1" style="align-items:center; margin-bottom:0.75rem;">
+            <label class="form-label" style="margin:0; white-space:nowrap;">Qty:</label>
+            <div class="qty-selector">
+              <button type="button" class="qty-btn" onclick="adjustQty('qty-{{ item.item_id }}', -1)">−</button>
+              <input
+                class="qty-input"
+                type="number"
+                id="qty-{{ item.item_id }}"
+                name="quantity"
+                value="1"
+                min="1"
+                max="{{ item.available }}"
+              />
+              <button type="button" class="qty-btn" onclick="adjustQty('qty-{{ item.item_id }}', 1)">+</button>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-success btn-full" id="order-btn-{{ item.item_id }}">
+            🛒 Order Now
+          </button>
+        </form>
+      </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <div class="empty-icon">🍽</div>
+      <div class="empty-title">No items on the menu today</div>
+      <div class="empty-text">Check back later — management sets up the menu each morning.</div>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function adjustQty(inputId, delta) {
+  const input = document.getElementById(inputId);
+  let val = parseInt(input.value) + delta;
+  const min = parseInt(input.min) || 1;
+  const max = parseInt(input.max) || 999;
+  input.value = Math.min(max, Math.max(min, val));
+}
+</script>
+{% endblock %}

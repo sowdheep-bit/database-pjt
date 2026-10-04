@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}My Orders — Canteen System{% endblock %}
+
+{% block body %}
+<nav class="navbar">
+  <div class="navbar-inner">
+    <a href="{{ url_for('index') }}" class="navbar-brand">
+      <div class="brand-icon">🍽</div>
+      Canteen
+    </a>
+    <ul class="navbar-nav">
+      <li><a href="{{ url_for('customer.menu') }}" id="nav-menu">Menu</a></li>
+      <li><a href="{{ url_for('customer.orders') }}" class="active" id="nav-orders">My Orders</a></li>
+    </ul>
+    <div class="navbar-user">
+      <span>👋 {{ session.get('customer_name', 'Customer') }}</span>
+      <a href="{{ url_for('customer.logout') }}" class="btn btn-outline btn-sm" id="logout-btn">Logout</a>
+    </div>
+  </div>
+</nav>
+
+<div class="container" style="padding-top:2rem; padding-bottom:3rem;">
+  <div class="page-header-inner mb-4">
+    <div>
+      <div class="page-title">My Orders</div>
+      <div class="page-subtitle">Your complete order history</div>
+    </div>
+    <a href="{{ url_for('customer.menu') }}" class="btn btn-primary" id="order-more-btn">+ Order More</a>
+  </div>
+
+  {% if orders %}
+    <div class="table-wrapper">
+      <table id="orders-table">
+        <thead>
+          <tr>
+            <th>Order ID</th>
+            <th>Item</th>
+            <th>Qty</th>
+            <th>Unit Price</th>
+            <th>Total</th>
+            <th>Date & Time</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for o in orders %}
+          <tr id="order-row-{{ o.OrderID }}">
+            <td><span class="badge badge-primary">#{{ o.OrderID }}</span></td>
+            <td><strong style="color:#fff;">{{ o.ItemName }}</strong></td>
+            <td>{{ o.QuantityOrdered }}</td>
+            <td>₹{{ "%.2f"|format(o.CostPrice|float) }}</td>
+            <td style="color:var(--accent); font-weight:700;">
+              ₹{{ "%.2f"|format((o.CostPrice|float) * o.QuantityOrdered) }}
+            </td>
+            <td style="color:var(--text-muted); font-size:0.82rem;">
+              {{ o.OrderTimestamp.strftime('%d %b %Y, %I:%M %p') if o.OrderTimestamp else '—' }}
+            </td>
+            <td>
+              <a href="{{ url_for('customer.order_detail', order_id=o.OrderID) }}"
+                 class="btn btn-outline btn-sm" id="detail-btn-{{ o.OrderID }}">
+                Details
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <div class="empty-icon">📋</div>
+      <div class="empty-title">No orders yet</div>
+      <div class="empty-text">Head to the menu to place your first order!</div>
+      <a href="{{ url_for('customer.menu') }}" class="btn btn-primary mt-3" id="go-to-menu-btn">View Menu →</a>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}Order #{{ order.OrderID }} — Canteen System{% endblock %}
+
+{% block body %}
+<nav class="navbar">
+  <div class="navbar-inner">
+    <a href="{{ url_for('index') }}" class="navbar-brand">
+      <div class="brand-icon">🍽</div>
+      Canteen
+    </a>
+    <ul class="navbar-nav">
+      <li><a href="{{ url_for('customer.menu') }}" id="nav-menu">Menu</a></li>
+      <li><a href="{{ url_for('customer.orders') }}" class="active" id="nav-orders">My Orders</a></li>
+    </ul>
+    <div class="navbar-user">
+      <a href="{{ url_for('customer.logout') }}" class="btn btn-outline btn-sm" id="logout-btn">Logout</a>
+    </div>
+  </div>
+</nav>
+
+<div class="container-sm" style="padding-top:2rem; padding-bottom:3rem;">
+  <a href="{{ url_for('customer.orders') }}" class="btn btn-outline btn-sm mb-3" id="back-btn">← Back to Orders</a>
+
+  <div class="order-header" id="order-detail-header">
+    <div class="order-id-badge">Order #{{ order.OrderID }}</div>
+    <h2 style="color:#fff; margin:0.5rem 0;">{{ order.ItemName }}</h2>
+    <p style="color:var(--text-muted); margin:0;">
+      {{ order.OrderTimestamp.strftime('%A, %d %B %Y at %I:%M %p') if order.OrderTimestamp else '—' }}
+    </p>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Order Details</span>
+      <span class="badge badge-success">Completed</span>
+    </div>
+
+    <table style="width:100%; border-collapse:collapse;">
+      <tr style="border-bottom:1px solid var(--border-light);">
+        <td style="padding:0.85rem 0; color:var(--text-muted); font-size:0.88rem;">Item</td>
+        <td style="padding:0.85rem 0; text-align:right; color:#fff; font-weight:600;">{{ order.ItemName }}</td>
+      </tr>
+      <tr style="border-bottom:1px solid var(--border-light);">
+        <td style="padding:0.85rem 0; color:var(--text-muted); font-size:0.88rem;">Category</td>
+        <td style="padding:0.85rem 0; text-align:right;">
+          <span class="badge badge-info">{{ order.Category }}</span>
+        </td>
+      </tr>
+      <tr style="border-bottom:1px solid var(--border-light);">
+        <td style="padding:0.85rem 0; color:var(--text-muted); font-size:0.88rem;">Quantity</td>
+        <td style="padding:0.85rem 0; text-align:right; color:#fff; font-weight:600;">{{ order.QuantityOrdered }}</td>
+      </tr>
+      <tr style="border-bottom:1px solid var(--border-light);">
+        <td style="padding:0.85rem 0; color:var(--text-muted); font-size:0.88rem;">Unit Price</td>
+        <td style="padding:0.85rem 0; text-align:right; color:#fff;">₹{{ "%.2f"|format(order.CostPrice|float) }}</td>
+      </tr>
+      <tr>
+        <td style="padding:0.85rem 0; color:var(--text-muted); font-size:0.88rem; font-weight:700;">Total</td>
+        <td style="padding:0.85rem 0; text-align:right; color:var(--accent); font-size:1.25rem; font-weight:800;">
+          ₹{{ "%.2f"|format((order.CostPrice|float) * order.QuantityOrdered) }}
+        </td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="text-center mt-4">
+    <a href="{{ url_for('customer.menu') }}" class="btn btn-primary" id="order-again-btn">Order Again →</a>
+  </div>
+</div>
+{% endblock %}

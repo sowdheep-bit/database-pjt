@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Register — Canteen System{% endblock %}
+{% block meta_description %}Register as a new customer to order food from the canteen.{% endblock %}
+
+{% block body %}
+<div class="auth-page">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <div class="icon">✨</div>
+    </div>
+    <h1 class="auth-title">Create Account</h1>
+    <p class="auth-subtitle">Register to start ordering from the canteen</p>
+
+    <form method="POST" action="{{ url_for('customer.register') }}" id="customer-register-form">
+      <div class="form-group">
+        <label class="form-label" for="full_name">Full Name</label>
+        <input
+          class="form-control"
+          type="text"
+          id="full_name"
+          name="full_name"
+          placeholder="Your full name"
+          required
+          autofocus
+          value="{{ request.form.get('full_name', '') }}"
+        />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="customer_type">Customer Type</label>
+        <select class="form-control" id="customer_type" name="customer_type" required>
+          <option value="" disabled {% if not request.form.get('customer_type') %}selected{% endif %}>Select type…</option>
+          <option value="Student" {% if request.form.get('customer_type') == 'Student' %}selected{% endif %}>Student</option>
+          <option value="Staff"   {% if request.form.get('customer_type') == 'Staff'   %}selected{% endif %}>Staff</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="contact_number">Contact Number <span style="color:var(--text-dim)">(optional)</span></label>
+        <input
+          class="form-control"
+          type="tel"
+          id="contact_number"
+          name="contact_number"
+          placeholder="e.g. 9876543210"
+          value="{{ request.form.get('contact_number', '') }}"
+        />
+      </div>
+
+      <button type="submit" class="btn btn-success btn-full btn-lg" id="register-submit-btn">
+        Create Account →
+      </button>
+    </form>
+
+    <div class="auth-footer">
+      Already have an ID?
+      <a href="{{ url_for('customer.login') }}" id="login-link">Sign In</a>
+      &nbsp;·&nbsp;
+      <a href="{{ url_for('index') }}">← Home</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

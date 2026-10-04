@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Customer Login — Canteen System{% endblock %}
+{% block meta_description %}Log in with your Customer ID to order food from the canteen.{% endblock %}
+
+{% block body %}
+<div class="auth-page">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <div class="icon">🧑‍🎓</div>
+    </div>
+    <h1 class="auth-title">Customer Login</h1>
+    <p class="auth-subtitle">Enter your Customer ID to access today's menu</p>
+
+    <form method="POST" action="{{ url_for('customer.login') }}" id="customer-login-form">
+      <div class="form-group">
+        <label class="form-label" for="customer_id">Customer ID</label>
+        <input
+          class="form-control"
+          type="number"
+          id="customer_id"
+          name="customer_id"
+          placeholder="e.g. 1001"
+          min="1"
+          required
+          autofocus
+        />
+        <div class="form-hint">Your unique ID from when you registered</div>
+      </div>
+      <button type="submit" class="btn btn-primary btn-full btn-lg" id="login-submit-btn">
+        Sign In →
+      </button>
+    </form>
+
+    <div class="auth-footer">
+      New here?
+      <a href="{{ url_for('customer.register') }}" id="register-link">Create an account</a>
+      &nbsp;·&nbsp;
+      <a href="{{ url_for('index') }}">← Home</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

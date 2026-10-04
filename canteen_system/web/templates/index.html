@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Canteen Management System{% endblock %}
+{% block meta_description %}Welcome to the Canteen Management System — order food or manage the canteen.{% endblock %}
+
+{% block body %}
+<div class="hero">
+  <div class="hero-content">
+    <span class="hero-badge">🍽 Canteen Management System</span>
+    <h1>Order. Manage.<br>Analyse.</h1>
+    <p>
+      A complete digital canteen — from placing your lunch order to tracking inventory
+      and viewing real-time sales analytics.
+    </p>
+
+    <div class="hero-actions">
+      <a href="{{ url_for('customer.login') }}" class="btn btn-primary btn-lg" id="customer-portal-btn">
+        🧑‍🎓 Customer Portal
+      </a>
+      <a href="{{ url_for('management.login') }}" class="btn btn-outline btn-lg" id="management-portal-btn">
+        🔐 Management Login
+      </a>
+    </div>
+
+    <div class="grid-2 mt-4" style="max-width: 560px; margin: 3rem auto 0;">
+      <a href="{{ url_for('customer.login') }}" class="role-card" id="customer-role-card">
+        <span class="role-icon">🧑‍🎓</span>
+        <div class="role-title">I'm a Customer</div>
+        <div class="role-desc">Browse today's menu and place your order</div>
+      </a>
+      <a href="{{ url_for('management.login') }}" class="role-card" id="management-role-card">
+        <span class="role-icon">👨‍💼</span>
+        <div class="role-title">I'm Staff</div>
+        <div class="role-desc">Manage inventory, setup menus, and view analytics</div>
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}

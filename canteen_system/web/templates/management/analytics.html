@@ -1,0 +1,199 @@
+{% extends "management/base_mgmt.html" %}
+{% block title %}Analytics — Canteen Management{% endblock %}
+
+{% block management_content %}
+<div class="page-header">
+  <div class="page-header-inner">
+    <div>
+      <div class="page-title">📈 Analytics</div>
+      <div class="page-subtitle">7-day rolling averages and peak-hour demand</div>
+    </div>
+  </div>
+</div>
+
+<div class="grid-2 gap-4">
+  {# ── Rolling Average Chart ──────────────────────── #}
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">7-Day Rolling Average</span>
+      <span class="badge badge-info">Wastage Risk</span>
+    </div>
+    <div class="chart-wrapper">
+      <canvas id="rollingAvgChart"></canvas>
+    </div>
+    <div id="rolling-table-container" class="mt-3"></div>
+  </div>
+
+  {# ── Peak Hour Chart ────────────────────────────── #}
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Peak Hour Demand (Today)</span>
+      <span class="badge badge-primary">Orders by Hour</span>
+    </div>
+    <div class="chart-wrapper">
+      <canvas id="peakHourChart"></canvas>
+    </div>
+    <div id="peak-table-container" class="mt-3"></div>
+  </div>
+</div>
+
+<div class="card mt-4" id="analytics-status" style="display:none; text-align:center; padding:2rem;">
+  <div class="empty-icon">📊</div>
+  <div class="empty-title" id="analytics-status-msg">Loading analytics...</div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+const CHART_DEFAULTS = {
+  color: '#8888AA',
+  borderColor: 'rgba(255,255,255,0.08)',
+  font: { family: 'Inter, sans-serif', size: 11 },
+};
+
+Chart.defaults.color = CHART_DEFAULTS.color;
+Chart.defaults.borderColor = CHART_DEFAULTS.borderColor;
+Chart.defaults.font = CHART_DEFAULTS.font;
+
+// ── Rolling Average Chart ───────────────────────────────
+fetch('/api/analytics/rolling-avg')
+  .then(r => r.json())
+  .then(data => {
+    const container = document.getElementById('rolling-table-container');
+
+    if (!data || data.error || data.length === 0) {
+      document.getElementById('rollingAvgChart').parentElement.innerHTML =
+        '<div class="empty-state"><div class="empty-icon">📊</div><div class="empty-title">No rolling average data today</div><div class="empty-text">Data appears after at least one day of DailyMenu history.</div></div>';
+      return;
+    }
+
+    const labels = data.map(r => r.name);
+    const sold   = data.map(r => r.quantity_sold);
+    const avg    = data.map(r => parseFloat(r.avg_sold));
+    const colors = data.map(r => r.risk === 'High' ? 'rgba(239,68,68,0.7)' : 'rgba(67,233,123,0.7)');
+
+    new Chart(document.getElementById('rollingAvgChart'), {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [
+          {
+            label: 'Sold Today',
+            data: sold,
+            backgroundColor: colors,
+            borderRadius: 6,
+          },
+          {
+            label: '7-Day Avg',
+            data: avg,
+            type: 'line',
+            borderColor: '#6C63FF',
+            backgroundColor: 'rgba(108,99,255,0.1)',
+            borderWidth: 2,
+            pointBackgroundColor: '#6C63FF',
+            tension: 0.3,
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'bottom', labels: { padding: 16 } },
+          tooltip: {
+            callbacks: {
+              afterLabel: (ctx) => {
+                const r = data[ctx.dataIndex];
+                return r ? `Risk: ${r.risk}` : '';
+              }
+            }
+          }
+        },
+        scales: {
+          y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.04)' } },
+          x: { grid: { display: false } },
+        },
+      },
+    });
+
+    // Risk table
+    let html = '<div class="table-wrapper"><table><thead><tr><th>Item</th><th>Sold</th><th>7-Day Avg</th><th>Risk</th></tr></thead><tbody>';
+    data.forEach(r => {
+      const badge = r.risk === 'High'
+        ? '<span class="badge badge-error">High</span>'
+        : '<span class="badge badge-success">Normal</span>';
+      html += `<tr><td style="color:#fff;">${r.name}</td><td>${r.quantity_sold}</td><td>${parseFloat(r.avg_sold).toFixed(1)}</td><td>${badge}</td></tr>`;
+    });
+    html += '</tbody></table></div>';
+    container.innerHTML = html;
+  })
+  .catch(err => {
+    document.getElementById('rollingAvgChart').parentElement.innerHTML =
+      `<div class="empty-state"><div class="empty-title">Error loading analytics</div><div class="empty-text">${err}</div></div>`;
+  });
+
+// ── Peak Hour Chart ─────────────────────────────────────
+fetch('/api/analytics/peak-hour')
+  .then(r => r.json())
+  .then(data => {
+    const container = document.getElementById('peak-table-container');
+
+    if (!data || data.error || data.length === 0) {
+      document.getElementById('peakHourChart').parentElement.innerHTML =
+        '<div class="empty-state"><div class="empty-icon">⏰</div><div class="empty-title">No orders today yet</div><div class="empty-text">Peak-hour data appears as orders come in.</div></div>';
+      return;
+    }
+
+    // Sort by hour for the chart display
+    const sorted = [...data].sort((a,b) => a.hour_of_day - b.hour_of_day);
+    const labels = sorted.map(r => `${String(r.hour_of_day).padStart(2,'0')}:00`);
+    const orders = sorted.map(r => r.total_orders);
+    const items  = sorted.map(r => r.total_items);
+
+    new Chart(document.getElementById('peakHourChart'), {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [
+          {
+            label: 'Orders',
+            data: orders,
+            backgroundColor: 'rgba(108,99,255,0.7)',
+            borderRadius: 6,
+          },
+          {
+            label: 'Items Sold',
+            data: items,
+            backgroundColor: 'rgba(56,249,215,0.4)',
+            borderRadius: 6,
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'bottom', labels: { padding: 16 } },
+        },
+        scales: {
+          y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.04)' } },
+          x: { grid: { display: false } },
+        },
+      },
+    });
+
+    // Peak hour table
+    let html = '<div class="table-wrapper"><table><thead><tr><th>Hour</th><th>Orders</th><th>Items Sold</th></tr></thead><tbody>';
+    data.forEach(r => {
+      html += `<tr><td style="color:#fff;">${String(r.hour_of_day).padStart(2,'0')}:00</td><td>${r.total_orders}</td><td>${r.total_items}</td></tr>`;
+    });
+    html += '</tbody></table></div>';
+    container.innerHTML = html;
+  })
+  .catch(err => {
+    document.getElementById('peakHourChart').parentElement.innerHTML =
+      `<div class="empty-state"><div class="empty-title">Error loading analytics</div><div class="empty-text">${err}</div></div>`;
+  });
+</script>
+{% endblock %}

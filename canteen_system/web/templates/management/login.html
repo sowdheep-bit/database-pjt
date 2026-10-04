@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Management Login — Canteen System{% endblock %}
+{% block meta_description %}Management staff login for the Canteen Management System.{% endblock %}
+
+{% block body %}
+<div class="auth-page">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <div class="icon" style="background:linear-gradient(135deg,#EF4444,#FF6584);">🔐</div>
+    </div>
+    <h1 class="auth-title">Management Login</h1>
+    <p class="auth-subtitle">Authorised personnel only</p>
+
+    <form method="POST" action="{{ url_for('management.login') }}" id="management-login-form">
+      <div class="form-group">
+        <label class="form-label" for="username">Username</label>
+        <input
+          class="form-control"
+          type="text"
+          id="username"
+          name="username"
+          placeholder="Enter your username"
+          required
+          autofocus
+          autocomplete="username"
+          value="{{ request.form.get('username', '') }}"
+        />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="password">Password</label>
+        <input
+          class="form-control"
+          type="password"
+          id="password"
+          name="password"
+          placeholder="Enter your password"
+          required
+          autocomplete="current-password"
+        />
+      </div>
+
+      <button type="submit" class="btn btn-danger btn-full btn-lg" id="mgmt-login-btn">
+        Sign In →
+      </button>
+    </form>
+
+    <div class="auth-footer">
+      <a href="{{ url_for('index') }}">← Back to Home</a>
+    </div>
+  </div>
+</div>
+{% endblock %}
